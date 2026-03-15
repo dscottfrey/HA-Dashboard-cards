@@ -1,4 +1,3 @@
-
 # Loads default set of integrations. Do not remove.
 default_config:
 
@@ -42,8 +41,19 @@ recorder:
       - sensor.h5074_0726_humidity
       - sensor.sd_card_write_rate
       - sensor.sd_card_write_delta
+      - sensor.va_inside_high
+      - sensor.va_inside_low
+      - sensor.va_outside_high
+      - sensor.va_outside_low
+      - sensor.va_water_pump_high
+      - sensor.va_water_pump_low
+      - sensor.va_fridge_high
+      - sensor.va_fridge_low
+      - sensor.va_pi_cpu_high
+      - sensor.va_pi_cpu_low
 
 template:
+  # --- GROUP 1: STATE-BASED SENSORS (YOUR EXISTING CODE) ---
   - sensor:
       - name: "Van CO2 Clean"
         unit_of_measurement: " "
@@ -100,3 +110,102 @@ template:
           {% else %}
             {{ states('sensor.van_dashboard_battery_percent') }}
           {% endif %}
+
+  # --- GROUP 2: TRIGGER-BASED HIGH/LOW (UPDATED TO 11PM RESET) ---
+  - trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: time
+        at: "06:00:00" # Daily High Reset
+      - platform: time
+        at: "23:00:00" # Daily Low Reset (11:00 PM)
+    sensor:
+      - name: "VA Inside High"
+        unique_id: va_inside_temp_high
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.alpstuga_air_quality_monitor_temperature') | float(none) %}
+          {% set old = states('sensor.va_inside_high') | float(-99) %}
+          {{ cur if (now().hour == 6 and now().minute < 5) or (cur > old) else old }}
+
+      - name: "VA Inside Low"
+        unique_id: va_inside_temp_low
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.alpstuga_air_quality_monitor_temperature') | float(none) %}
+          {% set old = states('sensor.va_inside_low') | float(999) %}
+          {{ cur if (now().hour == 23 and now().minute < 5) or (cur < old) else old }}
+
+      - name: "VA Outside High"
+        unique_id: va_outside_temp_high
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.h5074_0726_temperature') | float(none) %}
+          {% set old = states('sensor.va_outside_high') | float(-99) %}
+          {{ cur if (now().hour == 6 and now().minute < 5) or (cur > old) else old }}
+
+      - name: "VA Outside Low"
+        unique_id: va_outside_temp_low
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.h5074_0726_temperature') | float(none) %}
+          {% set old = states('sensor.va_outside_low') | float(999) %}
+          {{ cur if (now().hour == 23 and now().minute < 5) or (cur < old) else old }}
+
+      - name: "VA Water Pump High"
+        unique_id: va_water_pump_temp_high
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.h5074_06fb_temperature') | float(none) %}
+          {% set old = states('sensor.va_water_pump_high') | float(-99) %}
+          {{ cur if (now().hour == 6 and now().minute < 5) or (cur > old) else old }}
+
+      - name: "VA Water Pump Low"
+        unique_id: va_water_pump_temp_low
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.h5074_06fb_temperature') | float(none) %}
+          {% set old = states('sensor.va_water_pump_low') | float(999) %}
+          {{ cur if (now().hour == 23 and now().minute < 5) or (cur < old) else old }}
+
+      - name: "VA Fridge High"
+        unique_id: va_fridge_temp_high
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.h5074_0725_temperature') | float(none) %}
+          {% set old = states('sensor.va_fridge_high') | float(-99) %}
+          {{ cur if (now().hour == 6 and now().minute < 5) or (cur > old) else old }}
+
+      - name: "VA Fridge Low"
+        unique_id: va_fridge_temp_low
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.h5074_0725_temperature') | float(none) %}
+          {% set old = states('sensor.va_fridge_low') | float(999) %}
+          {{ cur if (now().hour == 23 and now().minute < 5) or (cur < old) else old }}
+
+      - name: "VA Pi CPU High"
+        unique_id: va_pi_cpu_temp_high
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.system_monitor_processor_temperature') | float(none) %}
+          {% set old = states('sensor.va_pi_cpu_high') | float(-99) %}
+          {{ cur if (now().hour == 6 and now().minute < 5) or (cur > old) else old }}
+
+      - name: "VA Pi CPU Low"
+        unique_id: va_pi_cpu_temp_low
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state: >
+          {% set cur = states('sensor.system_monitor_processor_temperature') | float(none) %}
+          {% set old = states('sensor.va_pi_cpu_low') | float(999) %}
+          {{ cur if (now().hour == 23 and now().minute < 5) or (cur < old) else old }}
