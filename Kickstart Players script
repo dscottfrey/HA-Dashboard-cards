@@ -1,6 +1,6 @@
 alias: Kickstart Players
 sequence:
-  - action: media_player.turn_off
+  - action: media_player.media_stop
     target:
       entity_id: media_player.whole_house
   - delay:
@@ -27,3 +27,4 @@ sequence:
       entity_id: media_player.whole_house
 mode: restart
 icon: mdi:rocket-launch
+
